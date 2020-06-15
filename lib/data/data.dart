@@ -1,5 +1,8 @@
 import 'package:wallfy/modal/modal.dart';
 
+final String apiKey = "zhivDdpUDmP0ve7ooXU6QQCEjV2SVNv4gcvktXSlHqc";
+
+
 List<CategoriesModal> getCategories(){
 
   List<CategoriesModal> categories = new List();
