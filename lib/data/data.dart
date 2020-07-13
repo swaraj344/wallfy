@@ -1,6 +1,7 @@
 import 'package:wallfy/modal/modal.dart';
 
 final String apiKey = "zhivDdpUDmP0ve7ooXU6QQCEjV2SVNv4gcvktXSlHqc";
+final pixelsApiKey="563492ad6f917000010000010421791d67984492b7eb7d750409f4c7";
 
 
 List<CategoriesModal> getCategories(){

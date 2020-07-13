@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:wallfy/screens/demo.dart';
 import 'package:wallfy/screens/home_screen.dart';
 
-void main() {
+Future<void> main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await FlutterDownloader.initialize(debug: false);
+
   runApp(MyApp());
 }
 

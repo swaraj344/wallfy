@@ -16,35 +16,73 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
 
   TextEditingController searchController = new TextEditingController();
+  int maxPage;
+  int page = 1;
+  bool loading = true;
+  ScrollController _scrollController;
 
   List<WallpaperModel> wallpaper = new List();
 
 
-  searchWallpaperQuery(String query) async {
-    var apiurl =
-        'https://api.unsplash.com/search/photos?page=1&query=$query&orientation=portrait';
-    var response =
-        await http.get(apiurl, headers: {'Authorization': 'Client-ID $apiKey'});
-    Map<String,dynamic> jsonData = jsonDecode(response.body);
-    jsonData["results"].forEach((jsonData) {
-      WallpaperModel wallpaperModel = new WallpaperModel.fromMap(jsonData);
-      wallpaper.add(wallpaperModel);
-    });
-    setState(() {});
+  searchWallpaperQuery(String query, {page}) async {
+    print("loading in search");
+    var apiUrl =
+        'https://api.unsplash.com/search/photos?page=$page&query=$query&orientation=portrait&per_page=30';
+    try {
+      var response = await http
+          .get(apiUrl, headers: {'Authorization': 'Client-ID $apiKey'});
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = jsonDecode(response.body);
+        jsonData["results"].forEach((jsonData) {
+          WallpaperModel wallpaperModel = new WallpaperModel.fromMap(jsonData);
+          wallpaper.add(wallpaperModel);
+        });
+        setState(() {});
+        maxPage = jsonData['total_pages'];
+        loading = true;
+      }
+
+    } catch (e) {
+      print("Error : $e");
+    }
+  }
+
+  loadMore() {
+    if (loading) {
+      print("loading");
+      loading = false;
+      page = page + 1;
+      searchWallpaperQuery(widget.searchQuery, page: page);
+    } else {
+      print("already loading $loading");
+    }
   }
 
   @override
   void initState() {
-    searchWallpaperQuery(widget.searchQuery);
-    super.initState();
     searchController.text = widget.searchQuery;
+    searchWallpaperQuery(widget.searchQuery);
+    _scrollController = new ScrollController();
+    _scrollController.addListener(() {
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double currentScroll = _scrollController.position.pixels;
+      var prePixel = 300.0;
+      if ( maxScroll - currentScroll <= prePixel) {
+        if (page != maxPage + 1) {
+
+          loadMore();
+        }
+      }
+    });
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-//      backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
         iconTheme: IconThemeData(
           color: Colors.black54
 
@@ -54,6 +92,8 @@ class _SearchScreenState extends State<SearchScreen> {
         elevation: 0.0,
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
+        physics: BouncingScrollPhysics(),
         child: Container(
           child: Column(
             children: <Widget>[

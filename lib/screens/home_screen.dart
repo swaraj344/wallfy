@@ -15,28 +15,70 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  ScrollController scrollController;
   TextEditingController searchController = new TextEditingController();
   List<CategoriesModal> categories = new List();
   List<WallpaperModel> wallpaper = new List();
+  int page = 1;
+  int maxPage;
+  bool loading = true;
 
-  loadListsOfWallpaper() async {
-    var apiurl =
-        'https://api.unsplash.com/search/photos?page=1&query=wallpaper&orientation=portrait';
-    var response =
-        await http.get(apiurl, headers: {'Authorization': 'Client-ID $apiKey'});
-    Map<String, dynamic> jsonData = jsonDecode(response.body);
-    jsonData["results"].forEach((jsonData) {
-      WallpaperModel wallpaperModel = new WallpaperModel.fromMap(jsonData);
-      wallpaper.add(wallpaperModel);
-    });
-    setState(() {});
+  Future loadListsOfWallpaper({page}) async {
+    var apiUrl =
+        'https://api.unsplash.com/search/photos?page=$page&query=hd wallpapers&orientation=portrait&per_page=30';
+
+    try {
+      var response = await http
+          .get(apiUrl, headers: {'Authorization': 'Client-ID $apiKey'});
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = jsonDecode(response.body);
+        jsonData["results"].forEach((jsonData) {
+          WallpaperModel wallpaperModel = new WallpaperModel.fromMap(jsonData);
+          wallpaper.add(wallpaperModel);
+        });
+        setState(() {});
+        maxPage = jsonData['total_pages'];
+        loading = true;
+      }
+    } catch (e) {
+      print("Error : $e");
+    }
+  }
+
+  loadMore() {
+    if (loading) {
+      print("loading");
+      loading = false;
+      page = page + 1;
+      loadListsOfWallpaper(page: page);
+    } else {
+      print("already loading $loading");
+    }
   }
 
   @override
   void initState() {
+    scrollController = new ScrollController();
+    scrollController.addListener(() {
+      double maxScroll = scrollController.position.maxScrollExtent;
+      double currentScroll = scrollController.position.pixels;
+      var prePixel = 300.0;
+      if (maxScroll - currentScroll <= prePixel) {
+        if (page != maxPage + 1) {
+          loadMore();
+        }
+      }
+    });
     loadListsOfWallpaper();
     categories = getCategories();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,6 +92,8 @@ class _HomeState extends State<Home> {
         elevation: 0.0,
       ),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
+        controller: scrollController,
         child: Container(
           child: Column(
             children: <Widget>[
@@ -71,11 +115,12 @@ class _HomeState extends State<Home> {
                       ),
                     ),
                     InkWell(
-                        onTap: (){
+                        onTap: () {
                           FocusScope.of(context).unfocus();
                           Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context)=> SearchScreen(searchQuery: searchController.text,)
-                          ));
+                              builder: (context) => SearchScreen(
+                                    searchQuery: searchController.text,
+                                  )));
                         },
                         child: Container(child: Icon(Icons.search)))
                   ],
@@ -85,6 +130,7 @@ class _HomeState extends State<Home> {
               Container(
                 height: 80,
                 child: ListView.builder(
+//                  controller: scrollController,
                     physics: ClampingScrollPhysics(),
                     padding: EdgeInsets.symmetric(horizontal: 24.0),
                     scrollDirection: Axis.horizontal,
@@ -99,7 +145,7 @@ class _HomeState extends State<Home> {
               SizedBox(
                 height: 10,
               ),
-              wallpaperList(context: context, wallpaper: wallpaper)
+              wallpaperList(wallpaper: wallpaper, context: context)
             ],
           ),
         ),
@@ -116,8 +162,13 @@ class CategoriesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>CategoriesScreen(query: title.toLowerCase(),)));
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => CategoriesScreen(
+                      query: title.toLowerCase(),
+                    )));
       },
       child: Container(
         margin: EdgeInsets.only(right: 4.0),
