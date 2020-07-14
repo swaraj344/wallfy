@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wallfy/data/data.dart';
 import 'package:wallfy/modal/modal.dart';
 import 'package:wallfy/modal/wallpaper_model.dart';
@@ -24,6 +25,7 @@ class _HomeState extends State<Home> {
   bool loading = true;
 
   Future loadListsOfWallpaper({page}) async {
+
     var apiUrl =
         'https://api.unsplash.com/search/photos?page=$page&query=hd wallpapers&orientation=portrait&per_page=30';
 
@@ -43,6 +45,32 @@ class _HomeState extends State<Home> {
       }
     } catch (e) {
       print("Error : $e");
+
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext context) {
+            return WillPopScope(
+              onWillPop: () => Future.value(false),
+              child: AlertDialog(
+                title: Center(
+                    child: Icon(
+                  Icons.signal_cellular_connected_no_internet_4_bar,
+                  color: Colors.red,
+                )),
+                content: Text("Check your Connection"),
+                actions: [
+                  FlatButton(
+                    onPressed: () {
+                      SystemChannels.platform
+                          .invokeMethod('SystemNavigator.pop');
+                    },
+                    child: Text("Exit"),
+                  )
+                ],
+              ),
+            );
+          });
     }
   }
 
@@ -56,6 +84,8 @@ class _HomeState extends State<Home> {
       print("already loading $loading");
     }
   }
+
+  checkInternet() {}
 
   @override
   void initState() {
@@ -182,16 +212,20 @@ class CategoriesCard extends StatelessWidget {
                   width: 120.0,
                   fit: BoxFit.cover,
                 )),
-            Container(
-              height: 60.0,
-              width: 120.0,
-              color: Colors.black26,
-              alignment: Alignment.center,
-              child: Text(title,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w500)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+
+                height: 60.0,
+                width: 120.0,
+                color: Colors.black26,
+                alignment: Alignment.center,
+                child: Text(title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w500)),
+              ),
             )
           ],
         ),

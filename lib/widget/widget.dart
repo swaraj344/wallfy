@@ -1,10 +1,8 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:wallfy/modal/wallpaper_model.dart';
 import 'package:wallfy/screens/image_preview_screen.dart';
-import 'package:path_provider/path_provider.dart';
-//import 'package:image/image.dart' as IMG;
+
 
 Widget brandName() {
   return RichText(
@@ -31,7 +29,10 @@ Widget wallpaperList(
     {List<WallpaperModel> wallpaper,
     BuildContext context,
     ScrollController controller}) {
-  return Container(
+  bool isNotEmpty = wallpaper.map((wallpaper) {
+    return gridTile(context, wallpaper);
+  }).toList().isNotEmpty;
+  return isNotEmpty?Container(
     padding: EdgeInsets.symmetric(horizontal: 10.0),
     child: GridView.count(
       controller: controller,
@@ -45,6 +46,8 @@ Widget wallpaperList(
         return gridTile(context, wallpaper);
       }).toList(),
     ),
+  ):Center(
+    child: Text("Result Not Found"),
   );
 }
 
